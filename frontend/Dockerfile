@@ -1,32 +1,37 @@
 # ------------------- Stage 1: Build Stage ------------------------------
-FROM node:21 AS frontend-builder
+FROM node:21 AS builder
 
-# Set the working directory to /app
+# Set working directory
 WORKDIR /app
 
-# Copy the package.json and package-lock.json for dependency installation
+# Copy package files and install deps
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy source code
 COPY . .
 
-# ------------------- Stage 2: Final Stage ------------------------------
-FROM node:21-slim
+# Set production environment variables before build (if needed)
+# ARG VITE_API_PATH
+# ENV VITE_API_PATH=$VITE_API_PATH
 
-# Set the working directory to /app
-WORKDIR /app
+# Build the Vite app
+RUN npm run build
 
-# Copy built assets and dependencies from frontend-builder stage
-COPY --from=frontend-builder /app .
+# ------------------- Stage 2: NGINX Server Stage ------------------------------
+FROM nginx:alpine
 
-# Copy the .env.sample file to .env.local
-COPY .env.docker .env.local
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# Expose port 5173 for the Node.js application
-EXPOSE 5173
+# Copy built frontend files to Nginx's public directory
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Define the default command to run the application in development mode
-CMD ["npm", "run", "dev", "--", "--host"]
+# Copy custom nginx config (you'll create this file next)
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

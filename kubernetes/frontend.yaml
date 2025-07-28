@@ -21,6 +21,11 @@ spec:
           image: srdevop/wanderlust-frontend-beta:v1.2
           ports:
             - containerPort: 5173
+          env:
+            - name: VITE_BACKEND_URL
+              value: http://backend-service.wanderlust.svc.cluster.local:8080  
+            
+      
 ---
 apiVersion: v1
 kind: Service

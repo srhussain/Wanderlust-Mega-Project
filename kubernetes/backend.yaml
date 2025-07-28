@@ -21,6 +21,11 @@ spec:
           image: srdevop/wanderlust-backend-beta:v1.2
           ports:
             - containerPort: 8080
+          env:
+              - name: MONGO_URL
+                value: mongodb://mongo-service:27017
+              - name: REDIS_HOST
+                value: redis-service
 ---
 apiVersion: v1
 kind: Service
