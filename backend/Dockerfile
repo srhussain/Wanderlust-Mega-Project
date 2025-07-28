@@ -1,31 +1,29 @@
-# Stage 1
+# -------------------- Stage 1: Build & Test --------------------
 FROM node:21 AS backend-builder
 
-# setup the working dir
 WORKDIR /app
 
-# code
+COPY package*.json ./
+RUN npm ci
+
 COPY . .
-
-# packages install
-RUN npm i
-
-# tests
 RUN npm run test
 
-# Stage 2
+# -------------------- Stage 2: Runtime --------------------
 FROM node:21-slim
 
-# setup the working dir
 WORKDIR /app
 
-# copy the above stage as compressed
+# Only bring needed files
 COPY --from=backend-builder /app .
 
-COPY .env.docker .env
+# Install only production deps
+RUN npm ci --omit=dev
 
-# Port
+# Use env vars from Kubernetes, not hardcoded file
+# (Optionally support local testing with .env)
+# ENV NODE_ENV=production
+
 EXPOSE 8080
 
-# App
 CMD ["npm", "start"]
